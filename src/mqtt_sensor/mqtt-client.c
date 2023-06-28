@@ -49,78 +49,23 @@
 #include <stdarg.h>
 /*---------------------------------------------------------------------------*/
 #define LOG_MODULE "mqtt-client"
-#ifdef MQTT_CLIENT_CONF_LOG_LEVEL
-#define LOG_LEVEL MQTT_CLIENT_CONF_LOG_LEVEL
-#else
+
 #define LOG_LEVEL LOG_LEVEL_NONE
-#endif
-/*---------------------------------------------------------------------------*/
-/* Controls whether the example will work in IBM Watson IoT platform mode */
-#ifdef MQTT_CLIENT_CONF_WITH_IBM_WATSON
-#define MQTT_CLIENT_WITH_IBM_WATSON MQTT_CLIENT_CONF_WITH_IBM_WATSON
-#else
-#define MQTT_CLIENT_WITH_IBM_WATSON 0
-#endif
-/*---------------------------------------------------------------------------*/
-/* MQTT broker address. Ignored in Watson mode */
-#ifdef MQTT_CLIENT_CONF_BROKER_IP_ADDR
-#define MQTT_CLIENT_BROKER_IP_ADDR MQTT_CLIENT_CONF_BROKER_IP_ADDR
-#else
-#define MQTT_CLIENT_BROKER_IP_ADDR "fd00::1"
-#endif
+
 /*---------------------------------------------------------------------------*/
 /*
  * MQTT Org ID.
  *
  * If it equals "quickstart", the client will connect without authentication.
  * In all other cases, the client will connect with authentication mode.
- *
- * In Watson mode, the username will be "use-token-auth". In non-Watson mode
- * the username will be MQTT_CLIENT_USERNAME.
- *
- * In all cases, the password will be MQTT_CLIENT_AUTH_TOKEN.
+ * username will be MQTT_CLIENT_USERNAME.
+ * password will be MQTT_CLIENT_AUTH_TOKEN.
  */
-#ifdef MQTT_CLIENT_CONF_ORG_ID
-#define MQTT_CLIENT_ORG_ID MQTT_CLIENT_CONF_ORG_ID
-#else
 #define MQTT_CLIENT_ORG_ID "quickstart"
-#endif
-/*---------------------------------------------------------------------------*/
-/* MQTT token */
-#ifdef MQTT_CLIENT_CONF_AUTH_TOKEN
-#define MQTT_CLIENT_AUTH_TOKEN MQTT_CLIENT_CONF_AUTH_TOKEN
-#else
 #define MQTT_CLIENT_AUTH_TOKEN "AUTHTOKEN"
-#endif
-/*---------------------------------------------------------------------------*/
-#if MQTT_CLIENT_WITH_IBM_WATSON
-/* With IBM Watson support */
-static const char *broker_ip = "0064:ff9b:0000:0000:0000:0000:b8ac:7cbd";
 #define MQTT_CLIENT_USERNAME "use-token-auth"
-
-#else /* MQTT_CLIENT_WITH_IBM_WATSON */
-/* Without IBM Watson support. To be used with other brokers, e.g. Mosquitto */
-static const char *broker_ip = MQTT_CLIENT_BROKER_IP_ADDR;
-
-#ifdef MQTT_CLIENT_CONF_USERNAME
-#define MQTT_CLIENT_USERNAME MQTT_CLIENT_CONF_USERNAME
-#else
-#define MQTT_CLIENT_USERNAME "use-token-auth"
-#endif
-
-#endif /* MQTT_CLIENT_WITH_IBM_WATSON */
-/*---------------------------------------------------------------------------*/
-#ifdef MQTT_CLIENT_CONF_STATUS_LED
-#define MQTT_CLIENT_STATUS_LED MQTT_CLIENT_CONF_STATUS_LED
-#else
 #define MQTT_CLIENT_STATUS_LED LEDS_GREEN
-#endif
-/*---------------------------------------------------------------------------*/
-#ifdef MQTT_CLIENT_CONF_WITH_EXTENSIONS
-#define MQTT_CLIENT_WITH_EXTENSIONS MQTT_CLIENT_CONF_WITH_EXTENSIONS
-#else
 #define MQTT_CLIENT_WITH_EXTENSIONS 0
-#endif
 /*---------------------------------------------------------------------------*/
 /*
  * A timeout used when waiting for something to happen (e.g. to connect or to
@@ -186,6 +131,14 @@ static uint8_t state;
 /* Payload length of ICMPv6 echo requests used to measure RSSI with def rt */
 #define ECHO_REQ_PAYLOAD_LEN   20
 /*---------------------------------------------------------------------------*/
+// TEMPERATURE MONITORING APPLICATION
+#define APP_PUBLISH_INTERVAL    (10 * CLOCK_SECOND)
+#define APP_EVENT_TYPE_ID       "appdata"
+#define APP_DATA_TYPE           "Temperature (Celsius)"
+
+#define APP_MQTT_CLIENT_BROKER_IP_ADDR "fd00::1"
+static const char *broker_ip = APP_MQTT_CLIENT_BROKER_IP_ADDR;
+
 PROCESS_NAME(mqtt_client_process);
 AUTOSTART_PROCESSES(&mqtt_client_process);
 /*---------------------------------------------------------------------------*/
@@ -439,6 +392,26 @@ construct_pub_topic(void)
   return 1;
 }
 /*---------------------------------------------------------------------------*/
+// APP
+static int
+app_construct_pub_topic(void)
+{
+  int len = snprintf(pub_topic, BUFFER_SIZE, "iot-app/evt/%s/fmt/json",
+                     conf.event_type_id);
+
+  /* len < 0: Error. Len >= BUFFER_SIZE: Buffer too small */
+  if(len < 0 || len >= BUFFER_SIZE) {
+    LOG_INFO("Pub Topic: %d, Buffer %d\n", len, BUFFER_SIZE);
+    return 0;
+  }
+
+#if MQTT_5
+  PUB_TOPIC_ALIAS = 1;
+#endif
+
+  return 1;
+}
+/*---------------------------------------------------------------------------*/
 static int
 construct_sub_topic(void)
 {
@@ -487,7 +460,12 @@ update_config(void)
     return;
   }
 
-  if(construct_pub_topic() == 0) {
+  //if(construct_pub_topic() == 0) {
+  //  /* Fatal error. Topic larger than the buffer */
+  //  state = STATE_CONFIG_ERROR;
+  //   return;
+  //}
+  if(app_construct_pub_topic() == 0) {
     /* Fatal error. Topic larger than the buffer */
     state = STATE_CONFIG_ERROR;
     return;
@@ -527,7 +505,8 @@ init_config()
   memcpy(conf.type_id, DEFAULT_TYPE_ID, strlen(DEFAULT_TYPE_ID));
   memcpy(conf.auth_token, MQTT_CLIENT_AUTH_TOKEN,
          strlen(MQTT_CLIENT_AUTH_TOKEN));
-  memcpy(conf.event_type_id, DEFAULT_EVENT_TYPE_ID,
+  memcpy(conf.event_type_id, APP_EVENT_TYPE_ID,
+  //memcpy(conf.event_type_id, DEFAULT_EVENT_TYPE_ID,
          strlen(DEFAULT_EVENT_TYPE_ID));
   memcpy(conf.broker_ip, broker_ip, strlen(broker_ip));
   memcpy(conf.cmd_type, DEFAULT_SUBSCRIBE_CMD_TYPE, 1);
@@ -563,10 +542,17 @@ static void
 publish(void)
 {
   /* Publish MQTT topic in IBM quickstart format */
+  // APP
+  printf("MQTT Client - Publish Sensor Data\n");
+  unsigned char app_sensor_data = 0x10;
+  unsigned char app_section_id = 'A';
+  unsigned char app_sensor_id = 0x01;
+  
   int len;
   int remaining = APP_BUFFER_SIZE;
   int i;
   char def_rt_str[64];
+   
 #if MQTT_5
   static uint8_t prop_err = 1;
 #endif
@@ -578,13 +564,17 @@ publish(void)
   len = snprintf(buf_ptr, remaining,
                  "{"
                  "\"d\":{"
+                 "\"DataType\":\""APP_DATA_TYPE"\","
+                 "\"Data\":%d,"
+                 "\"Section\":%c,"
+                 "\"SensorID\":%d,"
                  "\"Platform\":\""CONTIKI_TARGET_STRING"\","
 #ifdef CONTIKI_BOARD_STRING
                  "\"Board\":\""CONTIKI_BOARD_STRING"\","
 #endif
                  "\"Seq #\":%d,"
                  "\"Uptime (sec)\":%lu",
-                 seq_nr_value, clock_seconds());
+                 app_sensor_data, app_section_id, app_sensor_id, seq_nr_value, clock_seconds());
 
   if(len < 0 || len >= remaining) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining,
