@@ -63,7 +63,6 @@
 #define DEFAULT_BROKER_PORT         1883
 #define DEFAULT_PUBLSH_INTERVAL     (30 * CLOCK_SECOND)
 #define SENSOR_DATA_TOPIC           "sensor/data" // used for publishing sensor data
-#define SENSOR_CONFIG_TOPIC         "sensor/cfg" // used to subscirbe - only for the demo
 
 #define STATE_MACHINE_PERIODIC      (CLOCK_SECOND >> 1)
 #define PUBLISH_DATA_PERIOD         ((5 * CLOCK_SECOND) >> 1)
@@ -208,7 +207,6 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                 }
                 sprintf(app_buffer, 
                     "{"
-                    "\"d\":{"
                     "\"SectionID\":\""APP_SECTION_ID"\","
                     "\"SensorID\":\""APP_SENSOR_ID"\","
                     "\"DataType\":\""APP_DATA_TYPE"\","
@@ -218,7 +216,9 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                     "\"Board\":\""CONTIKI_BOARD_STRING"\","
 #endif
                     "\"MsgNumber\":%d,"
-                    "\"Uptime (sec)\":%lu", sensor_reading, msg_seq_n, clock_seconds());
+                    "\"Uptime (sec)\":%lu"
+                    "}"
+                    , sensor_reading, msg_seq_n, clock_seconds());
                 // sprintf(app_buffer, "report %d", msg_seq_n);
                 msg_seq_n++;
 				printf("PROCESS THREAD: Publish message (%d) Sensor reading: %d \n", msg_seq_n, sensor_reading);
