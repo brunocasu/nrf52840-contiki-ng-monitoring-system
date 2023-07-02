@@ -27,6 +27,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* Edited by Bruno Casu - 2023 */
 /*---------------------------------------------------------------------------*/
 #include "contiki.h"
 #include "net/routing/routing.h"
@@ -47,6 +49,7 @@
 #include <strings.h>
 
 #include "sensor_config.h"
+#include "random.h"
 /*---------------------------------------------------------------------------*/
 #define LOG_MODULE "mqtt-client"
 #ifdef MQTT_CLIENT_CONF_LOG_LEVEL
@@ -63,23 +66,23 @@
 #define SENSOR_CONFIG_TOPIC         "sensor/cfg" // used to subscirbe - only for the demo
 
 #define STATE_MACHINE_PERIODIC      (CLOCK_SECOND >> 1)
-#define PUBLISH_DATA_PERIOD         ((20 * CLOCK_SECOND) >> 1)
+#define PUBLISH_DATA_PERIOD         ((5 * CLOCK_SECOND) >> 1)
 #define RECONNECT_PERIOD            ((5 * CLOCK_SECOND) >> 1)
 #define MAX_RECONNECT_ATTEMPTS      10
 #define PUBLISH_DATA_SIZE_ERROR     0
 
+#define SIMULATION_TRHESHOLD_COUNT  20
+
 static const char *broker_ip = APP_MQTT_BROKER_ADDR;
-static struct etimer pub_data_timer;
-static struct etimer reconnect_timer;
+static struct etimer process_timer;
 static int n_reconnect_attempts = 0;
 static int msg_seq_n = 0;
-const int sensor_reading = 123;
+static int sensor_reading = 0;
 // int mqtt_connect_status;
 
 // static void mqtt_connect_error_handler(const int status);
 static bool have_connectivity(void);
 static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data);
-static void pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk, uint16_t chunk_len);
 /*---------------------------------------------------------------------------*/
 // We assume that the broker does not require authentication
 /*---------------------------------------------------------------------------*/
@@ -145,11 +148,12 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
   mqtt_register(&conn, &mqtt_client_process, client_id, mqtt_event, MAX_TCP_SEGMENT_SIZE);
 				  
   state=STATE_INIT;
+  leds_single_on(LEDS_RED);
 
   /* Main loop */
   while(1) {
       
-    if((ev == PROCESS_EVENT_TIMER && data == &reconnect_timer) ||
+    if((ev == PROCESS_EVENT_TIMER && data == &process_timer) ||   
         ev == PROCESS_EVENT_POLL || 
         state==STATE_INIT){
         
@@ -165,13 +169,13 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                     mqtt_connect(&conn, broker_address, DEFAULT_BROKER_PORT,
                             (DEFAULT_PUBLSH_INTERVAL * 3) / CLOCK_SECOND,
                             MQTT_CLEAN_SESSION_ON);
-                    etimer_set(&reconnect_timer, RECONNECT_PERIOD); // used as a timeout
+                    etimer_set(&process_timer, RECONNECT_PERIOD); // used as a timeout
                     // STATE_CONNECING waits for MQTT EVEN to connect
                 }
                 else{
                     printf("PROCESS THREAD: have_connectivity FAILED \n");
                     // STATE_INIT is maitained
-                    etimer_set(&reconnect_timer, RECONNECT_PERIOD);
+                    etimer_set(&process_timer, RECONNECT_PERIOD);
                 }
                 break;
                 
@@ -183,20 +187,25 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                     mqtt_connect(&conn, broker_address, DEFAULT_BROKER_PORT,
                             DEFAULT_PUBLSH_INTERVAL / CLOCK_SECOND,
                             MQTT_CLEAN_SESSION_ON);
-                    etimer_set(&reconnect_timer, RECONNECT_PERIOD); // set timer for reconnection attempt
+                    etimer_set(&process_timer, RECONNECT_PERIOD); // set timer for reconnection attempt
                 }
                 else {
                     n_reconnect_attempts = 0;
                     printf("PROCESS THREAD: Failed to connect to broker... \n");
+                    leds_single_on(LEDS_RED);
                 }
                 break;
             
             case STATE_CONNECTED:
-                n_reconnect_attempts = 0;
-                etimer_stop(&reconnect_timer);
-                
-                sprintf(pub_topic, "%s", "status");
-			
+                n_reconnect_attempts = 0;                
+                sprintf(pub_topic, "%s", SENSOR_DATA_TOPIC);
+                // simluate the temperature data
+                if (msg_seq_n > SIMULATION_TRHESHOLD_COUNT && msg_seq_n < SIMULATION_TRHESHOLD_COUNT+10){
+                    sensor_reading = 25 + (random_rand() % (10)); // Temperatures between 25~34
+                }
+                else{
+                    sensor_reading = 15 + (random_rand() % (8)); // Temperatures between 15~22
+                }
                 sprintf(app_buffer, 
                     "{"
                     "\"d\":{"
@@ -210,22 +219,18 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 #endif
                     "\"MsgNumber\":%d,"
                     "\"Uptime (sec)\":%lu", sensor_reading, msg_seq_n, clock_seconds());
-			
+                // sprintf(app_buffer, "report %d", msg_seq_n);
                 msg_seq_n++;
-				printf("PROCESS THREAD: Publish message (%d) \n", msg_seq_n);
+				printf("PROCESS THREAD: Publish message (%d) Sensor reading: %d \n", msg_seq_n, sensor_reading);
                 mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer, strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
-                
-                
-                etimer_set(&pub_data_timer, PUBLISH_DATA_PERIOD);
+                etimer_set(&process_timer, PUBLISH_DATA_PERIOD);
                 // STATE_CONNECTED is maintained until MQTT event detects a disconnection
                 break;
                 
 
             case STATE_DISCONNECTED:
-                // Connect to MQTT server
-                etimer_stop(&pub_data_timer);
                 state = STATE_CONNECTING;
-                etimer_set(&reconnect_timer, RECONNECT_PERIOD);
+                etimer_set(&process_timer, RECONNECT_PERIOD);
                 // STATE_CONNECING waits for MQTT EVEN to connect
                 break;
                 
@@ -242,26 +247,20 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 }
 
 /*---------------------------------------------------------------------------*/
-/** TEMP MONITORING APP - The sensor node subscribes to the "sensor/cfg" topic - ONLY FOR DEMO PURPOSES **/ 
-static void
-pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk, uint16_t chunk_len)
-{
-  printf("PUB HANDLER: topic='%s' (len=%u), chunk_len=%u\n", topic, topic_len, chunk_len);
-  return;
-}
-/*---------------------------------------------------------------------------*/
 static void
 mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 {
   switch(event) {
     case MQTT_EVENT_CONNECTED: {
         printf("MQTT EVENT: Connected to MQTT broker\n");
+        leds_single_off(LEDS_RED);
         state = STATE_CONNECTED;
-        process_poll(&mqtt_client_process);
+        // process_poll(&mqtt_client_process);
         break;
     }
     case MQTT_EVENT_DISCONNECTED: {
         printf("MQTT EVENT: MQTT broker disconnected. Reason %u\n", *((mqtt_event_t *)data));
+        leds_single_on(LEDS_RED);
         state = STATE_DISCONNECTED;
         process_poll(&mqtt_client_process);
         break;
@@ -269,7 +268,8 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     case MQTT_EVENT_PUBLISH: {
         msg_ptr = data;
         printf("MQTT EVENT: Received publish\n");
-        pub_handler(msg_ptr->topic, strlen(msg_ptr->topic), msg_ptr->payload_chunk, msg_ptr->payload_length);
+        // APP: the sensor mqtt client node will not be subscribed to any topic
+        // pub_handler(msg_ptr->topic, strlen(msg_ptr->topic), msg_ptr->payload_chunk, msg_ptr->payload_length);
         break;
     }
     case MQTT_EVENT_SUBACK: {
