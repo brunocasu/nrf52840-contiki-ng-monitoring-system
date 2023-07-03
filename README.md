@@ -12,4 +12,4 @@ On COOJA
  	- start BR: make TARGET=cooja connect-router-cooja
 	- test: ping6 fd00::201:1:1:1
 
-- 
+- for grafana: sudo snap start grafana 
