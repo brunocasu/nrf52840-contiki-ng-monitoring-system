@@ -15,3 +15,7 @@ sudo apt-get install python3.7
 sudo apt-get install libmysqlclient-dev
  
 python3 -m pip install mysql-connector-python
+
+/*** GRAFANA ***/
+sudo snap start grafana
+localhost:3000
