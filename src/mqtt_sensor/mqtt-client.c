@@ -254,6 +254,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     case MQTT_EVENT_CONNECTED: {
         printf("MQTT EVENT: Connected to MQTT broker\n");
         leds_single_off(LEDS_RED);
+        leds_single_on(LEDS_GREEN);
         state = STATE_CONNECTED;
         // process_poll(&mqtt_client_process);
         break;
@@ -261,6 +262,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     case MQTT_EVENT_DISCONNECTED: {
         printf("MQTT EVENT: MQTT broker disconnected. Reason %u\n", *((mqtt_event_t *)data));
         leds_single_on(LEDS_RED);
+        leds_single_off(LEDS_GREEN);
         state = STATE_DISCONNECTED;
         process_poll(&mqtt_client_process);
         break;

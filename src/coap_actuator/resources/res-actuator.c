@@ -39,8 +39,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include "coap-engine.h"
+#include <stdio.h>
+
+/** TEMP MONITORING APP **/
+#include "../coap-server.h"
+
+/** **/
+#define REPLY_BUFF_MAX_LEN  64
+// extern actuator_status_t actuator_status; // keeps the state of the actuator (ON, OFF or FAULT)
+static char reply_buff[REPLY_BUFF_MAX_LEN];
+static int activation_code = 0; // 0 set the system to state OFF, 1 set the system to state ON
 
 static void res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
+static void res_post_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 
 /*
  * A handler function named [resource name]_handler must be implemented for each RESOURCE.
@@ -48,34 +59,79 @@ static void res_get_handler(coap_message_t *request, coap_message_t *response, u
  * preferred_size and offset, but must respect the REST_MAX_CHUNK_SIZE limit for the buffer.
  * If a smaller block size is requested for CoAP, the REST framework automatically splits the data.
  */
-RESOURCE(res_hello,
-         "title=\"Hello world: ?len=0..\";rt=\"Text\"",
+RESOURCE(res_actuator,
+         "title=\"ActuatorCoolingSystem: ?activation=0..\";rt=\"Text\"",
          res_get_handler,
-         NULL,
+         res_post_handler,
          NULL,
          NULL);
 
 static void
 res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
-  const char *len = NULL;
-  /* Some data that has the length up to REST_MAX_CHUNK_SIZE. For more, see the chunk resource. */
-  char const *const message = "TEST REPLY - Actuator COAP Server";
-  int length = 33; /*           |<-------->| */
+  int length;
+   
+  if(actuator_status == ACTUATOR_OFF) {
+    sprintf(reply_buff, "Actuator SECTION("ACTUATOR_SECTION_ID") COOLING SYSTEM STATUS(OFF)");
+    length = strlen(reply_buff);
+  }
+  else if(actuator_status == ACTUATOR_ON) {
+    sprintf(reply_buff, "Actuator SECTION("ACTUATOR_SECTION_ID") COOLING SYSTEM STATUS(ON)");
+    length = strlen(reply_buff);
+  }
+  else if(actuator_status == ACTUATOR_FAULT) {
+    sprintf(reply_buff, "Actuator SECTION("ACTUATOR_SECTION_ID") COOLING SYSTEM STATUS(FAULT)");
+    length = strlen(reply_buff);
+  }
+  else {
+    sprintf(reply_buff, "UNKNOWN STATE");
+    length = 13;  
+  }
+    
+  if(length > REST_MAX_CHUNK_SIZE) {
+      length = REST_MAX_CHUNK_SIZE;
+  }
+  memcpy(buffer, reply_buff, length);
 
-  /* The query string can be retrieved by rest_get_query() or parsed for its key-value pairs. */
-  if(coap_get_query_variable(request, "len", &len)) {
-    length = atoi(len);
-    if(length < 0) {
-      length = 0;
+  coap_set_header_content_format(response, TEXT_PLAIN); /* text/plain is the default, hence this option could be omitted. */
+  coap_set_header_etag(response, (uint8_t *)&length, 1);
+  coap_set_payload(response, buffer, length);
+}
+
+static void
+res_post_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+{
+  const char *msg_activation = NULL;
+  int length; 
+
+  /* The query string can be retrieved by rest_get_query() or parsed for its key-value pairs. */if(coap_get_query_variable(request, "activation", &msg_activation)) {
+    // get the activation code sent in the message 
+    activation_code = atoi(msg_activation);
+    if(activation_code == 0) { // activation code 0 turns off the actuator
+      actuator_status = ACTUATOR_OFF;
+      sprintf(reply_buff, "Actuator CMD Received COOLING SYSTEM STATUS(OFF)");
+      length = strlen(reply_buff);
     }
+    else if(activation_code == 1) { // activation code 1 turns on the actuator
+      actuator_status = ACTUATOR_ON;
+      sprintf(reply_buff, "Actuator CMD Received COOLING SYSTEM STATUS(ON)");
+      length = strlen(reply_buff);
+    }
+    else {
+      sprintf(reply_buff, "Actuator CMD Error: Unknown activation code");
+      length = strlen(reply_buff);
+    }
+  }
+  else{
+    sprintf(reply_buff, "Actuator CMD Received: No Activation code sent");
+    length = strlen(reply_buff);
+  }
+    
     if(length > REST_MAX_CHUNK_SIZE) {
       length = REST_MAX_CHUNK_SIZE;
     }
-    memcpy(buffer, message, length);
-  } else {
-    memcpy(buffer, message, length);
-  }
+    memcpy(buffer, reply_buff, length);
+
 
   coap_set_header_content_format(response, TEXT_PLAIN); /* text/plain is the default, hence this option could be omitted. */
   coap_set_header_etag(response, (uint8_t *)&length, 1);

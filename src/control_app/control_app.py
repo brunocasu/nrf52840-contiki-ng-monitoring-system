@@ -21,7 +21,7 @@ sensor_data_read_query = '''
     LIMIT 10
 '''
 
-coap_server_address = 'coap://[fd00::302:304:506:708]:5683/test/hello'  # Replace with the server's IPv6 address and port
+coap_server_address = 'coap://[fd00::302:304:506:708]:5683/actuator/test/hello'  # Replace with the server's IPv6 address and port
 
 # Create a HelperClient object
 coap_host, coap_port, res_path = parse_uri(coap_server_address)

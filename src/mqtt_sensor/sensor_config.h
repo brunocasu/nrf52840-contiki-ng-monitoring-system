@@ -3,7 +3,7 @@
 #define SENSOR_CONFIG_H_
 /*---------------------------------------------------------------------------*/
 #define APP_SECTION_ID	"A"
-#define APP_SENSOR_ID	"1"
+#define APP_SENSOR_ID	"001"
 #define APP_DATA_TYPE	"Temperature (Celsius)"
 /*---------------------------------------------------------------------------*/
 #endif /* SENSOR_CONFIG_H_ */
