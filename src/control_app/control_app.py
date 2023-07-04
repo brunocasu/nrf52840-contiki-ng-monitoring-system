@@ -21,6 +21,12 @@ sensor_data_read_query = '''
     LIMIT 10
 '''
 
+coap_server_address = 'coap://[fd00::302:304:506:708]:5683/test/hello'  # Replace with the server's IPv6 address and port
+
+# Create a HelperClient object
+coap_host, coap_port, res_path = parse_uri(coap_server_address)
+coap_client = HelperClient(server=(coap_host, coap_port))
+
 
 ## functions
 def print_msg_info(sensor_id, section, data_type, sensor_data):
@@ -48,9 +54,10 @@ def read_sensor_data():
 
     
 def publish_event():
-        fd00::302:304:506:708/test/hello
-        
-        
+    print("Publish Data in COAP server")
+    response = coap_client.get(res_path)
+    print('Response Code:', response.code)
+    print('Response Payload:', response.payload)
 
 def control_app():
     read_sensor_data()
