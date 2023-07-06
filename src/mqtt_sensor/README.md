@@ -1,11 +1,26 @@
 # mqtt-client
 
-MQTT Client - works as a sensor sending periodic data (publish)
+MQTT Client - Application Sensor Node
+The client sends periodically Temperature readings to the MQTT broker
 
+## building the application 
+Clean previous builds: 
+```
+$ make distclean
+```
+
+Build native:
 ```
 make TARGET=native && sudo ./mqtt-client.native
 ```
 
+Building in the dongle:
+```
+make TARGET=nrf52840 hello-world.upload
+make TARGET=nrf52840 BOARD=dongle ./mqtt-client.dfu-upload PORT=/dev/ttyACM0
+```
+
+## device info
 Look for the node's global IPv6, e.g.:
 ```
 [INFO: Native    ] Added global IPv6 address fd00::302:304:506:708
@@ -14,8 +29,4 @@ Look for the node's global IPv6, e.g.:
 And ping it (over the tun interface):
 ```
 $ ping6 fd00::302:304:506:708
-PING fd00::302:304:506:708(fd00::302:304:506:708) 56 data bytes
-64 bytes from fd00::302:304:506:708: icmp_seq=1 ttl=64 time=0.289 ms
 ```
-
-coap-client -m get coap://[fd00::302:304:506:708]/actuator/test/hello

@@ -36,19 +36,21 @@
 #include "net/ipv6/uip.h"
 #include "net/ipv6/uip-icmp6.h"
 #include "net/ipv6/sicslowpan.h"
+#include "net/ipv6/uip-ds6.h"
+#include "net/ipv6/uip-debug.h"
 #include "sys/etimer.h"
 #include "sys/ctimer.h"
 #include "sys/mutex.h"
+#include "sys/node-id.h"
 #include "lib/sensors.h"
 #include "dev/button-hal.h"
 #include "dev/leds.h"
 #include "os/sys/log.h"
 #include "mqtt-client.h"
-
+#include <stdio.h>
 #include <string.h>
 #include <strings.h>
 
-#include "sensor_config.h"
 #include "random.h"
 /*---------------------------------------------------------------------------*/
 #define LOG_MODULE "mqtt-client"
@@ -58,30 +60,36 @@
 #define LOG_LEVEL LOG_LEVEL_DBG
 #endif
 
+/** FOR COOJA SIM **/
+#define APP_COOJA_TEST
+
 /** TEMP MONITORING APP **/
 #define APP_MQTT_BROKER_ADDR        "fd00::1"
 #define DEFAULT_BROKER_PORT         1883
 #define DEFAULT_PUBLSH_INTERVAL     (30 * CLOCK_SECOND)
-#define SENSOR_DATA_TOPIC           "sensor/data" // used for publishing sensor data
+#define SENSOR_DATA_TOPIC           "sensor/data" // MQTT topic
 
-#define STATE_MACHINE_PERIODIC      (CLOCK_SECOND >> 1)
-#define PUBLISH_DATA_PERIOD         ((5 * CLOCK_SECOND) >> 1)
+#define PUBLISH_DATA_PERIOD         ((10 * CLOCK_SECOND) >> 1)
 #define RECONNECT_PERIOD            ((5 * CLOCK_SECOND) >> 1)
-#define MAX_RECONNECT_ATTEMPTS      10
+#define MAX_RECONNECT_ATTEMPTS      100
 #define PUBLISH_DATA_SIZE_ERROR     0
 
-#define SIMULATION_TRHESHOLD_COUNT  20
+#define APP_DATA_TYPE	"Temperature"
+#define SIMULATION_TRHESHOLD_COUNT  20  // this counter value is used to increase the simulated temp. value
 
 static const char *broker_ip = APP_MQTT_BROKER_ADDR;
 static struct etimer process_timer;
 static int n_reconnect_attempts = 0;
 static int msg_seq_n = 0;
 static int sensor_reading = 0;
-// int mqtt_connect_status;
+static int app_sensor_id;
+static int app_section_id;
 
-// static void mqtt_connect_error_handler(const int status);
+// functions 
 static bool have_connectivity(void);
 static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data);
+static void print_addresses(void);
+
 /*---------------------------------------------------------------------------*/
 // We assume that the broker does not require authentication
 /*---------------------------------------------------------------------------*/
@@ -89,11 +97,9 @@ static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data
 static uint8_t state;
 
 #define STATE_INIT    		  0
-#define STATE_NET_OK    	  1
-#define STATE_CONNECTING      2
-#define STATE_CONNECTED       3
-#define STATE_SUBSCRIBED      4
-#define STATE_DISCONNECTED    5
+#define STATE_CONNECTING      1
+#define STATE_CONNECTED       2
+#define STATE_DISCONNECTED    3
 
 /*---------------------------------------------------------------------------*/
 /* Maximum TCP segment size for outgoing segments of our socket */
@@ -108,8 +114,6 @@ static uint8_t state;
 
 static char client_id[BUFFER_SIZE];
 static char pub_topic[BUFFER_SIZE];
-// static char sub_topic[BUFFER_SIZE];
-// static int value = 0;
 /*---------------------------------------------------------------------------*/
 /*
  * The main MQTT buffers.
@@ -120,7 +124,7 @@ static char app_buffer[APP_BUFFER_SIZE];
 /*---------------------------------------------------------------------------*/
 static struct mqtt_message *msg_ptr = 0;
 static struct mqtt_connection conn;
-mqtt_status_t status;
+// mqtt_status_t status;
 char broker_address[CONFIG_IP_ADDR_STR_LEN];
 
 PROCESS_NAME(mqtt_client_process);
@@ -133,6 +137,14 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 {
 
   PROCESS_BEGIN();
+  print_addresses();
+#ifdef APP_COOJA_TEST
+  app_sensor_id = node_id + 100;  // Use cooja mote id
+  app_section_id = (app_sensor_id % 2) + 1;
+#else
+  app_sensor_id = 101;
+  app_section_id = 1;
+#endif
   
   printf("TEMP MONITORING APP - SENSOR NODE (MQTT Client)\n");
   printf("PROCESS THREAD: mqtt_client_process Begin\n");
@@ -143,6 +155,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                      linkaddr_node_addr.u8[2], linkaddr_node_addr.u8[5],
                      linkaddr_node_addr.u8[6], linkaddr_node_addr.u8[7]);
 
+  printf("PROCESS THREAD: MQTT Client ID: %s\n", client_id);
   // Broker registration					 
   mqtt_register(&conn, &mqtt_client_process, client_id, mqtt_event, MAX_TCP_SEGMENT_SIZE);
 				  
@@ -179,8 +192,10 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                 break;
                 
             case STATE_CONNECTING:
+                // when State connecting is detected, the connection attempt had a timeout
+                // a new attempt to connect to the broker is done
                 n_reconnect_attempts++;
-                // STATE_CONNECING is maitained
+                
                 if (n_reconnect_attempts < MAX_RECONNECT_ATTEMPTS){
                     printf("PROCESS THREAD: (%d) Retry broker connection...\n", n_reconnect_attempts);
                     mqtt_connect(&conn, broker_address, DEFAULT_BROKER_PORT,
@@ -193,6 +208,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                     printf("PROCESS THREAD: Failed to connect to broker... \n");
                     leds_single_on(LEDS_RED);
                 }
+                // STATE_CONNECING is maitained
                 break;
             
             case STATE_CONNECTED:
@@ -200,6 +216,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                 sprintf(pub_topic, "%s", SENSOR_DATA_TOPIC);
                 // simluate the temperature data
                 if (msg_seq_n > SIMULATION_TRHESHOLD_COUNT && msg_seq_n < SIMULATION_TRHESHOLD_COUNT+10){
+                    // higher temperatures generated after SIMULATION_TRHESHOLD_COUNT readings are sent
                     sensor_reading = 25 + (random_rand() % (10)); // Temperatures between 25~34
                 }
                 else{
@@ -207,8 +224,8 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                 }
                 sprintf(app_buffer, 
                     "{"
-                    "\"SectionID\":\""APP_SECTION_ID"\","
-                    "\"SensorID\":\""APP_SENSOR_ID"\","
+                    "\"SectionID\":%d,"
+                    "\"SensorID\":%d,"
                     "\"DataType\":\""APP_DATA_TYPE"\","
                     "\"Data\":%d,"
                     "\"Platform\":\""CONTIKI_TARGET_STRING"\","
@@ -218,16 +235,18 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                     "\"MsgNumber\":%d,"
                     "\"Uptime (sec)\":%lu"
                     "}"
-                    , sensor_reading, msg_seq_n, clock_seconds());
-                // sprintf(app_buffer, "report %d", msg_seq_n);
+                    ,app_section_id, app_sensor_id,  sensor_reading, msg_seq_n, clock_seconds());
+                
                 msg_seq_n++;
-				printf("PROCESS THREAD: Publish message (%d) Sensor reading: %d \n", msg_seq_n, sensor_reading);
+                
+				printf("PROCESS THREAD: SECTION(%d) SENSOR(%d) MSG_N(%d) TEMP %d*C \n", 
+                       app_section_id, app_sensor_id, msg_seq_n, sensor_reading);
                 mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer, strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
+                // set timer to sensor reading interval
                 etimer_set(&process_timer, PUBLISH_DATA_PERIOD);
                 // STATE_CONNECTED is maintained until MQTT event detects a disconnection
                 break;
                 
-
             case STATE_DISCONNECTED:
                 state = STATE_CONNECTING;
                 etimer_set(&process_timer, RECONNECT_PERIOD);
@@ -270,7 +289,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     case MQTT_EVENT_PUBLISH: {
         msg_ptr = data;
         printf("MQTT EVENT: Received publish\n");
-        // APP: the sensor mqtt client node will not be subscribed to any topic
+        // APP: the current sensor mqtt client node will not be subscribed to any topic
         // pub_handler(msg_ptr->topic, strlen(msg_ptr->topic), msg_ptr->payload_chunk, msg_ptr->payload_length);
         break;
     }
@@ -310,5 +329,20 @@ have_connectivity(void)
     return false;
   }
   return true;
+}
+
+static void print_addresses(void){
+
+  int i;
+  uint8_t state;
+  printf("ADDR CONFIG: IPv6 addresses:\n");
+  for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
+    state = uip_ds6_if.addr_list[i].state;
+    if(uip_ds6_if.addr_list[i].isused && (state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {
+      uip_debug_ipaddr_print(&uip_ds6_if.addr_list[i].ipaddr);
+      printf("\n");
+    }
+  }
+  printf("\n****************\n");
 }
 /*---------------------------------------------------------------------------*/

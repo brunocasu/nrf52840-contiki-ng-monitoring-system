@@ -38,7 +38,7 @@ def on_disconnect(app_mqtt_client, userdata, rc):
 
 
 def on_message(app_mqtt_client, userdata, msg):
-    print("\n*************\nReceived message on topic: " + str(msg.topic) )# + "\n"+ str(msg.payload.decode()))
+    print("\n*************\nReceived message on topic: " + str(msg.topic))#  + "\n"+ str(msg.payload.decode()))
     msg_string = msg.payload.decode()
     msg_json = json.loads(msg_string)
     sensor_id = msg_json["SensorID"]
