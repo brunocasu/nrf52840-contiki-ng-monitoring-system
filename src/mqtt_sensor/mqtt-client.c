@@ -69,7 +69,7 @@
 #define DEFAULT_PUBLSH_INTERVAL     (30 * CLOCK_SECOND)
 #define SENSOR_DATA_TOPIC           "sensor/data" // MQTT topic
 
-#define PUBLISH_DATA_PERIOD         ((10 * CLOCK_SECOND) >> 1)
+#define PUBLISH_DATA_PERIOD         ((5 * CLOCK_SECOND) >> 1)
 #define RECONNECT_PERIOD            ((5 * CLOCK_SECOND) >> 1)
 #define MAX_RECONNECT_ATTEMPTS      100
 #define PUBLISH_DATA_SIZE_ERROR     0

@@ -38,15 +38,20 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "contiki.h"
 #include "coap-engine.h"
 #include <stdio.h>
 
 /** TEMP MONITORING APP **/
 #include "../coap-server.h"
+#include "sys/log.h"
 
 /** **/
 #define REPLY_BUFF_MAX_LEN  64
-// extern actuator_status_t actuator_status; // keeps the state of the actuator (ON, OFF or FAULT)
+
+extern int app_section_id;
+
+extern int actuator_status; // keeps the state of the actuator (ON, OFF or FAULT)
 static char reply_buff[REPLY_BUFF_MAX_LEN];
 static int activation_code = 0; // 0 set the system to state OFF, 1 set the system to state ON
 
@@ -66,24 +71,30 @@ RESOURCE(res_actuator,
          NULL,
          NULL);
 
+
+
 static void
 res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
   int length;
-   
+  
   if(actuator_status == ACTUATOR_OFF) {
-    sprintf(reply_buff, "Actuator SECTION("ACTUATOR_SECTION_ID") COOLING SYSTEM STATUS(OFF)");
+    printf("GET msg: status COOLING SYSTEM STATUS(OFF)\n");
+    sprintf(reply_buff, "Actuator SECTION(%d) COOLING SYSTEM STATUS(OFF)", app_section_id);
     length = strlen(reply_buff);
   }
   else if(actuator_status == ACTUATOR_ON) {
-    sprintf(reply_buff, "Actuator SECTION("ACTUATOR_SECTION_ID") COOLING SYSTEM STATUS(ON)");
+    printf("GET msg: status COOLING SYSTEM STATUS(ON)\n");
+    sprintf(reply_buff, "Actuator SECTION(%d) COOLING SYSTEM STATUS(ON)", app_section_id);
     length = strlen(reply_buff);
   }
   else if(actuator_status == ACTUATOR_FAULT) {
-    sprintf(reply_buff, "Actuator SECTION("ACTUATOR_SECTION_ID") COOLING SYSTEM STATUS(FAULT)");
+    printf("GET msg: status COOLING SYSTEM STATUS(FAULT)an");
+    sprintf(reply_buff, "Actuator SECTION(%d) COOLING SYSTEM STATUS(FAULT)", app_section_id);
     length = strlen(reply_buff);
   }
   else {
+    printf("GET msg: ERROR status UNKNOWN\n");
     sprintf(reply_buff, "UNKNOWN STATE");
     length = 13;  
   }
@@ -104,25 +115,30 @@ res_post_handler(coap_message_t *request, coap_message_t *response, uint8_t *buf
   const char *msg_activation = NULL;
   int length; 
 
-  /* The query string can be retrieved by rest_get_query() or parsed for its key-value pairs. */if(coap_get_query_variable(request, "activation", &msg_activation)) {
+  /* The query string can be retrieved by rest_get_query() or parsed for its key-value pairs. */
+  if(coap_get_query_variable(request, "activation", &msg_activation)) {
     // get the activation code sent in the message 
     activation_code = atoi(msg_activation);
     if(activation_code == 0) { // activation code 0 turns off the actuator
       actuator_status = ACTUATOR_OFF;
+      printf("Actuator CMD Received: actuator_status = ACTUATOR_OFF\n");
       sprintf(reply_buff, "Actuator CMD Received COOLING SYSTEM STATUS(OFF)");
       length = strlen(reply_buff);
     }
     else if(activation_code == 1) { // activation code 1 turns on the actuator
       actuator_status = ACTUATOR_ON;
+      printf("Actuator CMD Received: actuator_status = ACTUATOR_ON\n");
       sprintf(reply_buff, "Actuator CMD Received COOLING SYSTEM STATUS(ON)");
       length = strlen(reply_buff);
     }
     else {
+      printf("Actuator CMD Received: Unknown activation code\n");
       sprintf(reply_buff, "Actuator CMD Error: Unknown activation code");
       length = strlen(reply_buff);
     }
   }
   else{
+    printf("Actuator CMD Received: No Activation code sent\n");
     sprintf(reply_buff, "Actuator CMD Received: No Activation code sent");
     length = strlen(reply_buff);
   }

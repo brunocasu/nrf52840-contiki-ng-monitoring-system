@@ -1,3 +1,6 @@
+/*** MYSQL commands ***/
+sudo mysql -u root -p
+
 CREATE DATABASE sensor_db;
 
 USE sensor_db;
@@ -6,10 +9,12 @@ CREATE TABLE sensor_data ( id INT AUTO_INCREMENT PRIMARY KEY, sensorid VARCHAR(5
 
 SELECT * FROM sensor_data;
 
+// To delete table contents: TRUNCATE sensor_data;
+
 CREATE USER 'cloudapp'@'localhost' IDENTIFIED BY '4wXlt7&EY1g^';
 GRANT ALL PRIVILEGES ON *.* TO 'cloudapp'@'localhost';
 
-/*** FOR PYTHON INSTALL ***/
+/*** FOR MYSQL PYTHON INSTALL ***/
 
 sudo apt-get install python3.7
 sudo apt-get install libmysqlclient-dev

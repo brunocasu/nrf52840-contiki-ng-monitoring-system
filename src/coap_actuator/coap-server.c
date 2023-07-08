@@ -53,8 +53,8 @@
 #define LOG_LEVEL LOG_LEVEL_APP
 
 /** TEMP MONITORING APP **/
-
-
+extern int app_section_id;
+extern int actuator_status;
 /*
  * Resources to be activated need to be imported through the extern keyword.
  * The build system automatically compiles the resources in the corresponding sub-directory.
@@ -78,7 +78,16 @@ PROCESS_THREAD(actuator_server, ev, data)
   coap_activate_resource(&res_actuator, "actuator/control");
   coap_activate_resource(&res_hello, "actuator/test/hello");
 
+  LOG_INFO("actuator_status = ACTUATOR_OFF\n");
   actuator_status = ACTUATOR_OFF; // start the system with the actuator OFF
+#ifdef APP_COOJA_TEST
+  app_section_id = (node_id % 2)+1;
+#else
+  app_section_id = 1;
+#endif
+
+  // Print the mote number
+  printf("Actuator Section ID: %d\n", app_section_id);
    
   while(1) {
     PROCESS_WAIT_EVENT();

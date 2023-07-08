@@ -1,9 +1,8 @@
-# mqtt-client
+# coap-server
 
-MQTT Client - works as a sensor sending periodic data (publish)
 
 ```
-make TARGET=native && sudo ./mqtt-client.native
+make TARGET=native && sudo ./coap-server.native
 ```
 
 Look for the node's global IPv6, e.g.:

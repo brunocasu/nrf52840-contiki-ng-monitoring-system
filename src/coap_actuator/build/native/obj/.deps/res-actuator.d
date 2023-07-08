@@ -1,9 +1,5 @@
 build/native/obj/res-actuator.o: resources/res-actuator.c \
- ../../..//os/net/app-layer/coap/module-macros.h \
- ../../..//os/net/app-layer/coap/coap-engine.h \
- ../../..//os/net/app-layer/coap/coap.h \
- ../../..//os/net/app-layer/coap/coap-constants.h \
- ../../..//os/net/app-layer/coap/coap-conf.h ../../..//os/contiki.h \
+ ../../..//os/net/app-layer/coap/module-macros.h ../../..//os/contiki.h \
  ../../..//arch/platform/native/./contiki-conf.h project-conf.h \
  ../../..//arch/cpu/native/./native-def.h \
  ../../..//os/contiki-default-conf.h ../../..//os/sys/process.h \
@@ -15,6 +11,10 @@ build/native/obj/res-actuator.o: resources/res-actuator.c \
  ../../..//os/sys/etimer.h ../../..//os/sys/rtimer.h \
  ../../..//os/dev/watchdog.h ../../..//arch/cpu/native/./rtimer-arch.h \
  ../../..//os/sys/pt.h ../../..//os/sys/clock.h \
+ ../../..//os/net/app-layer/coap/coap-engine.h \
+ ../../..//os/net/app-layer/coap/coap.h \
+ ../../..//os/net/app-layer/coap/coap-constants.h \
+ ../../..//os/net/app-layer/coap/coap-conf.h \
  ../../..//os/net/app-layer/coap/coap-transport.h \
  ../../..//os/net/app-layer/coap/coap-endpoint.h \
  ../../..//os/net/ipv6/uip.h ../../..//os/net/ipv6/uipopt.h \
@@ -26,17 +26,10 @@ build/native/obj/res-actuator.o: resources/res-actuator.c \
  ../../..//os/net/app-layer/coap/coap-observe.h \
  ../../..//os/net/app-layer/coap/coap-separate.h \
  ../../..//os/net/app-layer/coap/coap-observe-client.h \
- resources/../coap-server.h
+ resources/../coap-server.h ../../..//os/sys/log.h \
+ ../../..//os/sys/log-conf.h
 
 ../../..//os/net/app-layer/coap/module-macros.h:
-
-../../..//os/net/app-layer/coap/coap-engine.h:
-
-../../..//os/net/app-layer/coap/coap.h:
-
-../../..//os/net/app-layer/coap/coap-constants.h:
-
-../../..//os/net/app-layer/coap/coap-conf.h:
 
 ../../..//os/contiki.h:
 
@@ -84,6 +77,14 @@ project-conf.h:
 
 ../../..//os/sys/clock.h:
 
+../../..//os/net/app-layer/coap/coap-engine.h:
+
+../../..//os/net/app-layer/coap/coap.h:
+
+../../..//os/net/app-layer/coap/coap-constants.h:
+
+../../..//os/net/app-layer/coap/coap-conf.h:
+
 ../../..//os/net/app-layer/coap/coap-transport.h:
 
 ../../..//os/net/app-layer/coap/coap-endpoint.h:
@@ -111,3 +112,7 @@ project-conf.h:
 ../../..//os/net/app-layer/coap/coap-observe-client.h:
 
 resources/../coap-server.h:
+
+../../..//os/sys/log.h:
+
+../../..//os/sys/log-conf.h:
