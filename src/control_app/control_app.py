@@ -8,15 +8,8 @@ from coapthon.utils import parse_uri
 from coapthon.messages.message import Message
 from coapthon import defines as d
 
-#MySQL settings
-app_mysql_cnx = mysql.connector.connect(
-        host='localhost',
-        user='cloudapp',
-        password='4wXlt7&EY1g^',
-        database='sensor_db'
-    )
-mysql_cursor = app_mysql_cnx.cursor()
-# the table create in the sensor_db is "sensor_data"
+
+# the table create in the MySQL sensor_db is "sensor_data"
 sensor_data_read_query = '''
     SELECT sensorid, section, datatype, data
     FROM sensor_data
@@ -48,7 +41,16 @@ def read_sensor_data():
     MAX_RETRIES = 1
     retry_counter = 0
     cmd_sent_ok = 0
-    print("READING Data in sensor_data MySQL table")
+    print("\n*************\nREADING Data in sensor_data MySQL table")
+    #MySQL settings
+    app_mysql_cnx = mysql.connector.connect(
+        host='localhost',
+        user='cloudapp',
+        password='4wXlt7&EY1g^',
+        database='sensor_db'
+    )
+
+    mysql_cursor = app_mysql_cnx.cursor()
     mysql_cursor.execute(sensor_data_read_query)
     result = mysql_cursor.fetchall()
     section1_total = 0
@@ -87,6 +89,7 @@ def read_sensor_data():
                         retry_counter = retry_counter + 1
         else: ## Temperature is OK
             if status == 1: ## Actuator is registered as ON (Activated)
+                print("Temperature OK!")
                 while (retry_counter <= MAX_RETRIES) and (cmd_sent_ok == 0):
                     if (post_event(section1_id, 0) == 1): # send POST message, Activate Cooling System!
                         actuator1_status = 0
@@ -95,6 +98,8 @@ def read_sensor_data():
                         time.sleep(1)
                         retry_counter = retry_counter + 1
     ## check Section 2 average temperature
+    retry_counter = 0
+    cmd_sent_ok = 0
     if  section2_cnt  > 0:
         print("SECTION 2 Average Temp: "+str(round(section2_total/section2_cnt, 2))+"°C Status:"+str(status))
         status = actuator2_status
@@ -110,6 +115,7 @@ def read_sensor_data():
                         retry_counter = retry_counter + 1
         else: ## Temperature is OK
             if status == 1: ## Actuator is registered as ON (Activated)
+                print("Temperature OK!")
                 while (retry_counter <= MAX_RETRIES) and (cmd_sent_ok == 0):
                     if (post_event(section2_id, 0) == 1): # send POST message, Activate Cooling System!
                         actuator2_status = 0
@@ -117,7 +123,9 @@ def read_sensor_data():
                     else:
                         time.sleep(1)
                         retry_counter = retry_counter + 1
-
+    app_mysql_cnx.close()
+    print("*************\n")
+    
     
 def post_event(section, action=0):
     if section == section1_id:

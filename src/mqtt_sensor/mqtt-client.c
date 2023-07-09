@@ -75,7 +75,7 @@
 #define PUBLISH_DATA_SIZE_ERROR     0
 
 #define APP_DATA_TYPE	"Temperature"
-#define SIMULATION_TRHESHOLD_COUNT  20  // this counter value is used to increase the simulated temp. value
+#define SIMULATION_TRHESHOLD_COUNT  8  // this counter value is used to increase the simulated temp. value
 
 static const char *broker_ip = APP_MQTT_BROKER_ADDR;
 static struct etimer process_timer;
@@ -223,7 +223,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                 n_reconnect_attempts = 0;                
                 sprintf(pub_topic, "%s", SENSOR_DATA_TOPIC);
                 // simluate the temperature data
-                if (msg_seq_n > SIMULATION_TRHESHOLD_COUNT && msg_seq_n < SIMULATION_TRHESHOLD_COUNT+10){
+                if (msg_seq_n > SIMULATION_TRHESHOLD_COUNT && msg_seq_n < SIMULATION_TRHESHOLD_COUNT+5){
                     // higher temperatures generated after SIMULATION_TRHESHOLD_COUNT readings are sent
                     sensor_reading = 25 + (random_rand() % (10)); // Temperatures between 25~34
                 }
