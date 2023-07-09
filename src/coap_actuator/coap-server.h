@@ -7,7 +7,7 @@
 #define ACTUATOR_ON     1
 #define ACTUATOR_FAULT  2
 
-int app_section_id;
-int actuator_status;
+extern int app_section_id;
+extern int actuator_status; // o for suspended, 1 for activated
 
 #endif /* COAP_SERVER_H_ */

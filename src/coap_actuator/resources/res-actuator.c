@@ -41,7 +41,7 @@
 #include "contiki.h"
 #include "coap-engine.h"
 #include <stdio.h>
-
+#include "dev/leds.h"
 /** TEMP MONITORING APP **/
 #include "../coap-server.h"
 #include "sys/log.h"
@@ -49,9 +49,9 @@
 /** **/
 #define REPLY_BUFF_MAX_LEN  64
 
-extern int app_section_id;
+int app_section_id;
+int actuator_status;
 
-extern int actuator_status; // keeps the state of the actuator (ON, OFF or FAULT)
 static char reply_buff[REPLY_BUFF_MAX_LEN];
 static int activation_code = 0; // 0 set the system to state OFF, 1 set the system to state ON
 
@@ -121,12 +121,14 @@ res_post_handler(coap_message_t *request, coap_message_t *response, uint8_t *buf
     activation_code = atoi(msg_activation);
     if(activation_code == 0) { // activation code 0 turns off the actuator
       actuator_status = ACTUATOR_OFF;
+      leds_single_off(LEDS_RED);
       printf("Actuator CMD Received: actuator_status = ACTUATOR_OFF\n");
       sprintf(reply_buff, "Actuator CMD Received COOLING SYSTEM STATUS(OFF)");
       length = strlen(reply_buff);
     }
     else if(activation_code == 1) { // activation code 1 turns on the actuator
       actuator_status = ACTUATOR_ON;
+      leds_single_on(LEDS_RED);
       printf("Actuator CMD Received: actuator_status = ACTUATOR_ON\n");
       sprintf(reply_buff, "Actuator CMD Received COOLING SYSTEM STATUS(ON)");
       length = strlen(reply_buff);

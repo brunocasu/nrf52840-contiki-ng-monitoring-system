@@ -69,8 +69,8 @@
 #define DEFAULT_PUBLSH_INTERVAL     (30 * CLOCK_SECOND)
 #define SENSOR_DATA_TOPIC           "sensor/data" // MQTT topic
 
-#define PUBLISH_DATA_PERIOD         ((5 * CLOCK_SECOND) >> 1)
-#define RECONNECT_PERIOD            ((5 * CLOCK_SECOND) >> 1)
+#define PUBLISH_DATA_PERIOD         20 * CLOCK_SECOND
+#define RECONNECT_PERIOD            5 * CLOCK_SECOND
 #define MAX_RECONNECT_ATTEMPTS      100
 #define PUBLISH_DATA_SIZE_ERROR     0
 
@@ -79,11 +79,13 @@
 
 static const char *broker_ip = APP_MQTT_BROKER_ADDR;
 static struct etimer process_timer;
+static struct etimer start_timer;
 static int n_reconnect_attempts = 0;
 static int msg_seq_n = 0;
 static int sensor_reading = 0;
 static int app_sensor_id;
 static int app_section_id;
+static unsigned int random_delay;
 
 // functions 
 static bool have_connectivity(void);
@@ -161,6 +163,10 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 				  
   state=STATE_INIT;
   leds_single_on(LEDS_RED);
+  // Generate a random time delay to prevent collisions whe starting the simulation
+  random_delay = random_rand() % (CLOCK_SECOND * 10); // Generate a random delay between 0 and 10 seconds
+  etimer_set(&start_timer, random_delay);
+  PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&start_timer));
 
   /* Main loop */
   while(1) {
@@ -181,7 +187,8 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                     mqtt_connect(&conn, broker_address, DEFAULT_BROKER_PORT,
                             (DEFAULT_PUBLSH_INTERVAL * 3) / CLOCK_SECOND,
                             MQTT_CLEAN_SESSION_ON);
-                    etimer_set(&process_timer, RECONNECT_PERIOD); // used as a timeout
+                    random_delay = random_rand() % (CLOCK_SECOND * 10); // Generate a random delay between 0 and 10 seconds
+                    etimer_set(&process_timer, random_delay); // used as a timeout
                     // STATE_CONNECING waits for MQTT EVEN to connect
                 }
                 else{
@@ -201,7 +208,8 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                     mqtt_connect(&conn, broker_address, DEFAULT_BROKER_PORT,
                             DEFAULT_PUBLSH_INTERVAL / CLOCK_SECOND,
                             MQTT_CLEAN_SESSION_ON);
-                    etimer_set(&process_timer, RECONNECT_PERIOD); // set timer for reconnection attempt
+                    random_delay = random_rand() % (CLOCK_SECOND * 10); // Generate a random delay between 0 and 10 seconds
+                    etimer_set(&process_timer, random_delay); // set timer for reconnection attempt
                 }
                 else {
                     n_reconnect_attempts = 0;

@@ -45,7 +45,8 @@ def on_message(app_mqtt_client, userdata, msg):
     section = msg_json["SectionID"]
     data_type = msg_json["DataType"]
     sensor_data = msg_json["Data"]
-    print_msg_info(sensor_id, section, data_type, sensor_data)
+    msg_number = msg_json["MsgNumber"]
+    print_msg_info(sensor_id, section, data_type, sensor_data, msg_number)
     # write the data in the mysql table
     write_sensor_data(sensor_id, section, data_type, sensor_data)
     
@@ -63,10 +64,11 @@ def mqtt_reconnect():
             continue
         
         
-def print_msg_info(sensor_id, section, data_type, sensor_data):
+def print_msg_info(sensor_id, section, data_type, sensor_data, msg_number):
     print("Payload received: ")
     print("SensorID: ", sensor_id )
     print("SectionID: ", section )
+    print("MessageSeqNum: ", msg_number )
     print("DataType: ", data_type )
     print("Data: ", sensor_data )
     

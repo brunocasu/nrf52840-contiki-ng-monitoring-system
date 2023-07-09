@@ -23,15 +23,15 @@ sensor_data_read_query = '''
     ORDER BY timestamp DESC
     LIMIT 10
 '''
-data_check_interval = 5 # time in seconds between each data check from the DB
+data_check_interval = 10 # time in seconds between each data check from the DB
 section1_id = 1
 section2_id = 2
 actuator1_status = 0 # start deactivated (1 for activated status, 0 for deactivated)
 actuator2_status = 0
 TEMP_THRESHOLD = 24
 # edit server address based on actuators assigned IPv6
-coap_server1_address = 'coap://[fd00::302:304:506:708]:5683/actuator/control'  
-coap_server2_address = 'coap://[fd00::302:304:506:708]:5683/actuator/control'
+coap_server1_address = 'coap://[fd00::208:8:8:8]:5683/actuator/control'  
+coap_server2_address = 'coap://[fd00::209:9:9:9]:5683/actuator/control'
 
 
 ## functions
@@ -74,7 +74,7 @@ def read_sensor_data():
     ## check Section 1 average temperature
     if  section1_cnt  > 0:
         status = actuator1_status
-        print("SECTION 1 Average Temp: "+str(section1_total/section1_cnt)+"°C Status:"+str(status))
+        print("SECTION 1 Average Temp: "+str(round(section1_total/section1_cnt, 2))+"°C Status:"+str(status))
         if (section1_total/section1_cnt) > TEMP_THRESHOLD: ## Threshold crossed
             print("TS Crossed!")
             if status == 0: ## Actuator is registered as OFF (Suspended)
@@ -96,7 +96,7 @@ def read_sensor_data():
                         retry_counter = retry_counter + 1
     ## check Section 2 average temperature
     if  section2_cnt  > 0:
-        print("SECTION 2 Average Temp: "+str(section2_total/section2_cnt)+"°C")
+        print("SECTION 2 Average Temp: "+str(round(section2_total/section2_cnt, 2))+"°C Status:"+str(status))
         status = actuator2_status
         if (section2_total/section2_cnt) > TEMP_THRESHOLD: ## Threshold crossed
             print("TS Crossed!")
@@ -162,13 +162,14 @@ def get_actuator_status(section):
         print("Failed to Send GET msg")
 
 def control_app():
-    get_actuator_status(1)
-    get_actuator_status(2)
     # Wait for messages from the MQTT broker
     while True:
-        time.sleep(data_check_interval)
+        get_actuator_status(1)
+        get_actuator_status(2)
+        time.sleep(1)
         read_sensor_data()
+        time.sleep(data_check_interval-1)
     
-control_app()
+# control_app()
 
 

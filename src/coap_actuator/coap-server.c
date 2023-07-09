@@ -43,6 +43,8 @@
 #include "coap-engine.h"
 #include "dev/button-hal.h"
 #include "dev/button-sensor.h"
+#include "dev/leds.h"
+#include "sys/node-id.h"
 
 /** TEMP MONITORING APP **/
 #include "coap-server.h"
@@ -51,10 +53,12 @@
 #include "sys/log.h"
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_APP
+#define ALIVE_LED_INTERVAL     (1 * CLOCK_SECOND)
+
+/** FOR COOJA SIM **/
+#define APP_COOJA_TEST
 
 /** TEMP MONITORING APP **/
-extern int app_section_id;
-extern int actuator_status;
 /*
  * Resources to be activated need to be imported through the extern keyword.
  * The build system automatically compiles the resources in the corresponding sub-directory.
@@ -64,6 +68,8 @@ extern coap_resource_t
   res_hello;
 
 
+static struct etimer process_timer;
+  
 PROCESS(actuator_server, "Actuator COAP Server");
 AUTOSTART_PROCESSES(&actuator_server);
 
@@ -83,11 +89,12 @@ PROCESS_THREAD(actuator_server, ev, data)
 #ifdef APP_COOJA_TEST
   app_section_id = (node_id % 2)+1;
 #else
-  app_section_id = 1;
+  app_section_id = 11;
 #endif
 
   // Print the mote number
   printf("Actuator Section ID: %d\n", app_section_id);
+  etimer_set(&process_timer, ALIVE_LED_INTERVAL); 
    
   while(1) {
     PROCESS_WAIT_EVENT();
@@ -96,13 +103,19 @@ PROCESS_THREAD(actuator_server, ev, data)
       LOG_DBG("*********\nBUTTON TRIGGER\n");
       if (actuator_status == ACTUATOR_OFF){
         actuator_status = ACTUATOR_ON;
+        leds_single_on(LEDS_RED);
         LOG_DBG("COOLING SYSTEM ACTIVATION (STATUS: ON)\n");  
       }
       else if (actuator_status == ACTUATOR_ON){
         actuator_status = ACTUATOR_OFF;
+        leds_single_off(LEDS_RED);
         LOG_DBG("COOLING SYSTEM DEACTIVATION (STATUS: OFF)\n");  
       }
       
+    }
+    else{
+        leds_single_toggle(LEDS_GREEN);
+        etimer_set(&process_timer, ALIVE_LED_INTERVAL); 
     }
   }
   PROCESS_END();
