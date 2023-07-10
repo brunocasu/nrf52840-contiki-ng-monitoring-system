@@ -16,7 +16,7 @@ make TARGET=native && sudo ./mqtt-client.native
 
 Building in the dongle:
 ```
-make TARGET=nrf52840 hello-world.upload
+make TARGET=nrf52840 mqtt-client.upload
 make TARGET=nrf52840 BOARD=dongle ./mqtt-client.dfu-upload PORT=/dev/ttyACM0
 ```
 

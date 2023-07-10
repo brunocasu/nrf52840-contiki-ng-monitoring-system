@@ -25,7 +25,8 @@ TEMP_THRESHOLD = 24
 # edit server address based on actuators assigned IPv6
 coap_server1_address = 'coap://[fd00::208:8:8:8]:5683/actuator/control'  
 coap_server2_address = 'coap://[fd00::209:9:9:9]:5683/actuator/control'
-
+## for Dongle testing 
+# coap_server1_address = 'coap://[fd00::302:304:506:708]:5683/actuator/control'  
 
 ## functions
 def print_msg_info(sensor_id, section, data_type, sensor_data):

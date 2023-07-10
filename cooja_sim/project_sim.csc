@@ -17,7 +17,7 @@
     </events>
     <motetype>
       org.contikios.cooja.contikimote.ContikiMoteType
-      <identifier>mtype841133186</identifier>
+      <identifier>mtype331663220</identifier>
       <description>router</description>
       <source>[CONTIKI_DIR]/project_iot/src/rpl-border-router/border-router.c</source>
       <commands>make -j$(CPUS) border-router.cooja TARGET=cooja</commands>
@@ -41,7 +41,7 @@
     </motetype>
     <motetype>
       org.contikios.cooja.contikimote.ContikiMoteType
-      <identifier>mtype660295993</identifier>
+      <identifier>mtype161037635</identifier>
       <description>sensor</description>
       <source>[CONTIKI_DIR]/project_iot/src/mqtt_sensor/mqtt-client.c</source>
       <commands>make -j$(CPUS) mqtt-client.cooja TARGET=cooja</commands>
@@ -65,7 +65,7 @@
     </motetype>
     <motetype>
       org.contikios.cooja.contikimote.ContikiMoteType
-      <identifier>mtype180123096</identifier>
+      <identifier>mtype270966452</identifier>
       <description>mqtt-sensor</description>
       <source>[CONTIKI_DIR]/project_iot/src/mqtt_sensor/mqtt-client.c</source>
       <commands>make -j$(CPUS) mqtt-client.cooja TARGET=cooja</commands>
@@ -89,7 +89,7 @@
     </motetype>
     <motetype>
       org.contikios.cooja.contikimote.ContikiMoteType
-      <identifier>mtype701067171</identifier>
+      <identifier>mtype973674396</identifier>
       <description>APPborder_router</description>
       <source>[CONTIKI_DIR]/project_iot/src/rpl-border-router/border-router.c</source>
       <commands>make -j$(CPUS) border-router.cooja TARGET=cooja</commands>
@@ -113,7 +113,7 @@
     </motetype>
     <motetype>
       org.contikios.cooja.contikimote.ContikiMoteType
-      <identifier>mtype588459572</identifier>
+      <identifier>mtype61609070</identifier>
       <description>APPsensor</description>
       <source>[CONTIKI_DIR]/project_iot/src/mqtt_sensor/mqtt-client.c</source>
       <commands>make -j$(CPUS) mqtt-client.cooja TARGET=cooja</commands>
@@ -137,7 +137,7 @@
     </motetype>
     <motetype>
       org.contikios.cooja.contikimote.ContikiMoteType
-      <identifier>mtype354674471</identifier>
+      <identifier>mtype245650753</identifier>
       <description>APPactuator</description>
       <source>[CONTIKI_DIR]/project_iot/src/coap_actuator/coap-server.c</source>
       <commands>make -j$(CPUS) coap-server.cooja TARGET=cooja</commands>
@@ -161,7 +161,7 @@
     </motetype>
     <motetype>
       org.contikios.cooja.contikimote.ContikiMoteType
-      <identifier>mtype280012171</identifier>
+      <identifier>mtype938270311</identifier>
       <description>APPactuator</description>
       <source>[CONTIKI_DIR]/project_iot/src/coap_actuator/coap-server.c</source>
       <commands>make -j$(CPUS) coap-server.cooja TARGET=cooja</commands>
@@ -199,7 +199,7 @@
         <bitrate>250.0</bitrate>
       </interface_config>
       <interface_config>org.contikios.cooja.contikimote.interfaces.ContikiEEPROM</interface_config>
-      <motetype_identifier>mtype701067171</motetype_identifier>
+      <motetype_identifier>mtype973674396</motetype_identifier>
     </mote>
     <mote>
       <interface_config>
@@ -217,7 +217,7 @@
         <bitrate>250.0</bitrate>
       </interface_config>
       <interface_config>org.contikios.cooja.contikimote.interfaces.ContikiEEPROM</interface_config>
-      <motetype_identifier>mtype588459572</motetype_identifier>
+      <motetype_identifier>mtype61609070</motetype_identifier>
     </mote>
     <mote>
       <interface_config>
@@ -235,7 +235,7 @@
         <bitrate>250.0</bitrate>
       </interface_config>
       <interface_config>org.contikios.cooja.contikimote.interfaces.ContikiEEPROM</interface_config>
-      <motetype_identifier>mtype588459572</motetype_identifier>
+      <motetype_identifier>mtype61609070</motetype_identifier>
     </mote>
     <mote>
       <interface_config>
@@ -253,7 +253,7 @@
         <bitrate>250.0</bitrate>
       </interface_config>
       <interface_config>org.contikios.cooja.contikimote.interfaces.ContikiEEPROM</interface_config>
-      <motetype_identifier>mtype280012171</motetype_identifier>
+      <motetype_identifier>mtype938270311</motetype_identifier>
     </mote>
     <mote>
       <interface_config>
@@ -271,7 +271,7 @@
         <bitrate>250.0</bitrate>
       </interface_config>
       <interface_config>org.contikios.cooja.contikimote.interfaces.ContikiEEPROM</interface_config>
-      <motetype_identifier>mtype280012171</motetype_identifier>
+      <motetype_identifier>mtype938270311</motetype_identifier>
     </mote>
     <mote>
       <interface_config>
@@ -289,7 +289,7 @@
         <bitrate>250.0</bitrate>
       </interface_config>
       <interface_config>org.contikios.cooja.contikimote.interfaces.ContikiEEPROM</interface_config>
-      <motetype_identifier>mtype588459572</motetype_identifier>
+      <motetype_identifier>mtype61609070</motetype_identifier>
     </mote>
     <mote>
       <interface_config>
@@ -307,7 +307,7 @@
         <bitrate>250.0</bitrate>
       </interface_config>
       <interface_config>org.contikios.cooja.contikimote.interfaces.ContikiEEPROM</interface_config>
-      <motetype_identifier>mtype588459572</motetype_identifier>
+      <motetype_identifier>mtype61609070</motetype_identifier>
     </mote>
     <mote>
       <interface_config>
@@ -325,7 +325,7 @@
         <bitrate>250.0</bitrate>
       </interface_config>
       <interface_config>org.contikios.cooja.contikimote.interfaces.ContikiEEPROM</interface_config>
-      <motetype_identifier>mtype588459572</motetype_identifier>
+      <motetype_identifier>mtype61609070</motetype_identifier>
     </mote>
     <mote>
       <interface_config>
@@ -343,7 +343,7 @@
         <bitrate>250.0</bitrate>
       </interface_config>
       <interface_config>org.contikios.cooja.contikimote.interfaces.ContikiEEPROM</interface_config>
-      <motetype_identifier>mtype588459572</motetype_identifier>
+      <motetype_identifier>mtype61609070</motetype_identifier>
     </mote>
   </simulation>
   <plugin>
@@ -378,7 +378,7 @@
       <coloring />
     </plugin_config>
     <width>624</width>
-    <z>1</z>
+    <z>4</z>
     <height>240</height>
     <location_x>400</location_x>
     <location_y>160</location_y>
@@ -426,7 +426,7 @@
       <scrollpos>0,0</scrollpos>
     </plugin_config>
     <width>326</width>
-    <z>2</z>
+    <z>3</z>
     <height>122</height>
     <location_x>378</location_x>
     <location_y>366</location_y>
@@ -452,7 +452,7 @@
       <scrollpos>0,0</scrollpos>
     </plugin_config>
     <width>350</width>
-    <z>5</z>
+    <z>1</z>
     <height>172</height>
     <location_x>11</location_x>
     <location_y>413</location_y>
@@ -468,7 +468,7 @@
       <viewport>2.6485307549974464 0.0 0.0 2.6485307549974464 2.8208138543011216 35.84567825130744</viewport>
     </plugin_config>
     <width>400</width>
-    <z>3</z>
+    <z>2</z>
     <height>400</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -494,7 +494,7 @@
       <scrollpos>0,0</scrollpos>
     </plugin_config>
     <width>350</width>
-    <z>4</z>
+    <z>5</z>
     <height>124</height>
     <location_x>221</location_x>
     <location_y>504</location_y>

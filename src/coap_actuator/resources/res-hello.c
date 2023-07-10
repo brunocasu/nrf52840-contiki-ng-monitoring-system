@@ -36,6 +36,8 @@
  *      Matthias Kovatsch <kovatsch@inf.ethz.ch>
  */
 
+/** TEMP MONITORING APP **/
+/** THIS RESOURCE IS ONLY FOR TESTING THE COAP SERVER **/
 #include <stdlib.h>
 #include <string.h>
 #include "coap-engine.h"

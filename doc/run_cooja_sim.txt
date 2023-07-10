@@ -1,0 +1,29 @@
+#start cooja:
+docker start -ai (container)
+cd tools/cooja
+ant run
+
+#setup border router connection:
+cd project_iot/src/rpl-border-router
+make TARGET=cooja connect-router-cooja
+
+#start mosquitto broker (if is already running kill the process before starting)
+mosquitto -v
+
+#run the cloud application:
+cd project_iot/src/cloud_app
+python3 cloud_app.py
+
+#run the control application:
+cd project_iot/src/control_app
+python3
+import control_app
+-to run the application (automatic check)
+control_app.control_app()
+-to send commands to the actuators:
+control_app.post_event(section, action=0)
+control_app.get_actuator_status(section)
+
+
+#setup grafana: 
+sudo snap start grafana 

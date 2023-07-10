@@ -87,9 +87,15 @@ def cloud_app():
     app_mqtt_client.on_connect = on_connect
     app_mqtt_client.on_message = on_message
     app_mqtt_client.on_disconnect = on_disconnect
-
+    conn = 0
     # Connect to the broker
-    app_mqtt_client.connect(broker_address, broker_port, 60)
+    while conn == 0:
+        try:
+            app_mqtt_client.connect(broker_address, broker_port, 60)
+            conn = 1
+        except:
+            print("Failed to connect to broker...")
+        time.sleep(2)
 
     # Start the MQTT client loop - NON blocking
     app_mqtt_client.loop_start()
