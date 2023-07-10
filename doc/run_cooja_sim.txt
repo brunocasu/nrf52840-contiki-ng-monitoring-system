@@ -26,4 +26,5 @@ control_app.get_actuator_status(section)
 
 
 #setup grafana: 
-sudo snap start grafana 
+sudo snap start grafana
+-open browser: localhost:3000

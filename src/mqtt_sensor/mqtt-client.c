@@ -61,7 +61,7 @@
 #endif
 
 /** FOR COOJA SIM **/
-#define APP_COOJA_TEST
+//#define APP_COOJA_TEST
 
 /** TEMP MONITORING APP **/
 #define APP_MQTT_BROKER_ADDR        "fd00::1"
@@ -70,7 +70,7 @@
 #define SENSOR_DATA_TOPIC           "sensor/data" // MQTT topic
 
 #define PUBLISH_DATA_PERIOD         20 * CLOCK_SECOND
-#define RECONNECT_PERIOD            5 * CLOCK_SECOND
+#define RECONNECT_PERIOD            3 * CLOCK_SECOND
 #define MAX_RECONNECT_ATTEMPTS      100
 #define PUBLISH_DATA_SIZE_ERROR     0
 
@@ -187,7 +187,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                     mqtt_connect(&conn, broker_address, DEFAULT_BROKER_PORT,
                             (DEFAULT_PUBLSH_INTERVAL * 3) / CLOCK_SECOND,
                             MQTT_CLEAN_SESSION_ON);
-                    random_delay = random_rand() % (CLOCK_SECOND * 10); // Generate a random delay between 0 and 10 seconds
+                    random_delay = RECONNECT_PERIOD + random_rand() % (CLOCK_SECOND * 10); // Generate a random delay 
                     etimer_set(&process_timer, random_delay); // used as a timeout
                     // STATE_CONNECING waits for MQTT EVEN to connect
                 }
@@ -208,7 +208,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                     mqtt_connect(&conn, broker_address, DEFAULT_BROKER_PORT,
                             DEFAULT_PUBLSH_INTERVAL / CLOCK_SECOND,
                             MQTT_CLEAN_SESSION_ON);
-                    random_delay = random_rand() % (CLOCK_SECOND * 10); // Generate a random delay between 0 and 10 seconds
+                    random_delay = RECONNECT_PERIOD + random_rand() % (CLOCK_SECOND * 10); // Generate a random delay 
                     etimer_set(&process_timer, random_delay); // set timer for reconnection attempt
                 }
                 else {
@@ -343,7 +343,7 @@ static void print_addresses(void){
 
   int i;
   uint8_t state;
-  printf("ADDR CONFIG: IPv6 addresses:\n");
+  printf("ADDR CONFIG IPv6 addresses:\n"); 
   for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
     state = uip_ds6_if.addr_list[i].state;
     if(uip_ds6_if.addr_list[i].isused && (state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {

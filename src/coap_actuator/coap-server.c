@@ -56,7 +56,7 @@
 #define ALIVE_LED_INTERVAL     (1 * CLOCK_SECOND)
 
 /** FOR COOJA SIM **/
-#define APP_COOJA_TEST
+//#define APP_COOJA_TEST
 
 /** TEMP MONITORING APP **/
 /*
@@ -89,7 +89,7 @@ PROCESS_THREAD(actuator_server, ev, data)
 #ifdef APP_COOJA_TEST
   app_section_id = (node_id % 2)+1;
 #else
-  app_section_id = 11;
+  app_section_id = 1;
 #endif
 
   // Print the mote number
