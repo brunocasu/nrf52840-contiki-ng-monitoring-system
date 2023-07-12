@@ -45,6 +45,11 @@
 #include "dev/button-sensor.h"
 #include "dev/leds.h"
 #include "sys/node-id.h"
+#include "net/ipv6/uip.h"
+#include "net/ipv6/uip-icmp6.h"
+#include "net/ipv6/sicslowpan.h"
+#include "net/ipv6/uip-ds6.h"
+#include "net/ipv6/uip-debug.h"
 
 /** TEMP MONITORING APP **/
 #include "coap-server.h"
@@ -56,7 +61,7 @@
 #define ALIVE_LED_INTERVAL     (1 * CLOCK_SECOND)
 
 /** FOR COOJA SIM **/
-//#define APP_COOJA_TEST
+#define APP_COOJA_TEST
 
 /** TEMP MONITORING APP **/
 /*
@@ -67,7 +72,7 @@ extern coap_resource_t
   res_actuator,
   res_hello;
 
-
+static void print_addresses(void);
 static struct etimer process_timer;
   
 PROCESS(actuator_server, "Actuator COAP Server");
@@ -79,8 +84,8 @@ PROCESS_THREAD(actuator_server, ev, data)
 
   // PROCESS_PAUSE();
 
-  LOG_INFO("Starting Actuator COAP Server\n");
-
+  LOG_INFO("Starting Actuator COAP Server - Addr:\n");
+  print_addresses();
   coap_activate_resource(&res_actuator, "actuator/control");
   coap_activate_resource(&res_hello, "actuator/test/hello");
 
@@ -115,8 +120,24 @@ PROCESS_THREAD(actuator_server, ev, data)
     }
     else{
         leds_single_toggle(LEDS_GREEN);
+        //print_addresses(); /** Enable to get the Dongle IPv6 addr **/
         etimer_set(&process_timer, ALIVE_LED_INTERVAL); 
     }
   }
   PROCESS_END();
+}
+
+static void print_addresses(void){
+
+  int i;
+  uint8_t state;
+  printf("ADDR CONFIG IPv6 addresses:\n"); 
+  for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
+    state = uip_ds6_if.addr_list[i].state;
+    if(uip_ds6_if.addr_list[i].isused && (state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {
+      uip_debug_ipaddr_print(&uip_ds6_if.addr_list[i].ipaddr);
+      printf("\n");
+    }
+  }
+  printf("\n****************\n");
 }

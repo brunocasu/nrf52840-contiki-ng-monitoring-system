@@ -61,7 +61,7 @@
 #endif
 
 /** FOR COOJA SIM **/
-//#define APP_COOJA_TEST
+#define APP_COOJA_TEST
 
 /** TEMP MONITORING APP **/
 #define APP_MQTT_BROKER_ADDR        "fd00::1"
@@ -69,7 +69,7 @@
 #define DEFAULT_PUBLSH_INTERVAL     (30 * CLOCK_SECOND)
 #define SENSOR_DATA_TOPIC           "sensor/data" // MQTT topic
 
-#define PUBLISH_DATA_PERIOD         20 * CLOCK_SECOND
+#define PUBLISH_DATA_PERIOD         5 * CLOCK_SECOND
 #define RECONNECT_PERIOD            3 * CLOCK_SECOND
 #define MAX_RECONNECT_ATTEMPTS      100
 #define PUBLISH_DATA_SIZE_ERROR     0
@@ -144,7 +144,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
   app_sensor_id = node_id + 100;  // Use cooja mote id
   app_section_id = (app_sensor_id % 2) + 1;
 #else
-  app_sensor_id = 101;
+  app_sensor_id = 555;
   app_section_id = 1;
 #endif
   
@@ -177,6 +177,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
         
         switch (state){
             case STATE_INIT:
+                //print_addresses();/** Enable to get the Dongle IPv6 addr **/
                 // Test network connectivity
                 if(have_connectivity()==true){
                     printf("PROCESS THREAD: have_connectivity OK \n");
@@ -225,7 +226,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                 // simluate the temperature data
                 if (msg_seq_n > SIMULATION_TRHESHOLD_COUNT && msg_seq_n < SIMULATION_TRHESHOLD_COUNT+5){
                     // higher temperatures generated after SIMULATION_TRHESHOLD_COUNT readings are sent
-                    sensor_reading = 25 + (random_rand() % (10)); // Temperatures between 25~34
+                    sensor_reading = 28 + (random_rand() % (10)); // Temperatures between 28~37
                 }
                 else{
                     sensor_reading = 15 + (random_rand() % (8)); // Temperatures between 15~22

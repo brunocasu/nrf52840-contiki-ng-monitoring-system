@@ -17,9 +17,12 @@ make TARGET=native && sudo ./mqtt-client.native
 Building in the dongle:
 ```
 make TARGET=nrf52840 mqtt-client.upload
-make TARGET=nrf52840 BOARD=dongle ./mqtt-client.dfu-upload PORT=/dev/ttyACM0
+make TARGET=nrf52840 BOARD=dongle mqtt-client.dfu-upload PORT=/dev/ttyACM0
 ```
-
+connecting the Dongle Border Router:
+```
+make TARGET=nrf52840 BOARD=dongle PORT=/dev/ttyACM0 connect-router
+```
 ## device info
 Look for the node's global IPv6, e.g.:
 ```

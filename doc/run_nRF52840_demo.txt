@@ -1,11 +1,12 @@
-#start cooja:
-docker start -ai (container)
-cd tools/cooja
-ant run
+#plug in the border router dongle
 
-#setup border router connection:
-cd project_iot/src/rpl-border-router
-make TARGET=cooja connect-router-cooja
+#connect the border router
+make TARGET=nrf52840 BOARD=dongle PORT=/dev/ttyACM0 connect-router
+
+#plug the sensor and actuator dongles
+!check ttyACM port
+to connect the serial port:
+make login TARGET=nrf52840 BOARD=dongle PORT=/dev/ttyACMx
 
 #start mosquitto broker (if is already running kill the process before starting)
 mosquitto -v
@@ -15,7 +16,7 @@ cd project_iot/src/cloud_app
 python3 cloud_app.py
 
 #run the control application:
-!! modify the code
+!! edit the code
 cd project_iot/src/control_app
 python3
 import control_app
@@ -24,6 +25,7 @@ control_app.control_app()
 -to send commands to the actuators:
 control_app.post_event(section, action=0)
 control_app.get_actuator_status(section)
+
 
 #setup grafana: 
 sudo snap start grafana

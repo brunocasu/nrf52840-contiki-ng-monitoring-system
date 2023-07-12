@@ -16,17 +16,18 @@ sensor_data_read_query = '''
     ORDER BY timestamp DESC
     LIMIT 10
 '''
-data_check_interval = 10 # time in seconds between each data check from the DB
+data_check_interval = 5 # time in seconds between each data check from the DB
 section1_id = 1
 section2_id = 2
 actuator1_status = 0 # start deactivated (1 for activated status, 0 for deactivated)
 actuator2_status = 0
-TEMP_THRESHOLD = 24
+TEMP_THRESHOLD = 22
 # edit server address based on actuators assigned IPv6
-coap_server1_address = 'coap://[fd00::208:8:8:8]:5683/actuator/control'  
+# !! Cooja test
+#coap_server1_address = 'coap://[fd00::208:8:8:8]:5683/actuator/control'  
 coap_server2_address = 'coap://[fd00::209:9:9:9]:5683/actuator/control'
-## for Dongle testing 
-# coap_server1_address = 'coap://[fd00::302:304:506:708]:5683/actuator/control'  
+# !! Dongle testing 
+coap_server1_address = 'coap://[fd00::f6ce:369b:56a4:39a6]:5683/actuator/control'  
 
 ## functions
 def print_msg_info(sensor_id, section, data_type, sensor_data):
@@ -174,11 +175,13 @@ def control_app():
     # Wait for messages from the MQTT broker
     while True:
         get_actuator_status(1)
-        get_actuator_status(2)
+        # !! Cooja testing 
+        #get_actuator_status(2)
+        
         time.sleep(1)
         read_sensor_data()
         time.sleep(data_check_interval-1)
     
-# control_app()
+#control_app()
 
 
